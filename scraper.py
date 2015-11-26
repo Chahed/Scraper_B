@@ -11,9 +11,9 @@ def get_Id(url):
     return d[1]
 
 def dateclean(date):
-    d=date.split(' ')
+    d=date.split('\"')
     a=d[1].split('-')
-    return a[2]+'-'+d[1]+'-'+d[0]
+    return a[2]+'-'+a[1]+'-'+a[0]
 
 def scrap(url):
     response = urlopen(url)
