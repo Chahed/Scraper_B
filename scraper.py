@@ -10,9 +10,16 @@ def get_Id(url):
     d=url.split('=')
     return d[1]
 
+def suittext(text):
+    text=text.replace("   ","")
+    a=text.split(" ")
+    d=a[0].replace("\\t","")
+    a=d.replace("\\n","")
+    return a
+
 def dateclean(date):
-    d=date.split('\"')
-    a=d[1].split('-')
+    date=suittext(date)
+    a=date.split('-')
     return a[2]+'-'+a[1]+'-'+a[0]
 
 def scrap(url):
