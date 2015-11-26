@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from urllib.request import urlopen
+from urllib import urlopen
 from splinter import Browser
 import time
 import random
@@ -95,7 +95,7 @@ def suppredon(l):
     return l1
 
 def Navigation(link):
-    with Browser("firefox") as browser:
+    with Browser("phantomjs", service_args=['--ignore-ssl-errors=true', '--ssl-protocol=any']) as browser:
         browser.driver.set_window_size(1280, 1024)
         browser.visit(link)
         time.sleep(random.uniform(0.5,2.9))
