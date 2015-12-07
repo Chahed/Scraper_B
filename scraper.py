@@ -10,7 +10,7 @@ def get_Id(url):
     d=url.split('=')
     return d[1]
 
-def suittext(text):
+def suittext2(text):
     text=text.replace("   ","")
     a=text.split(" ")
     a=a[0]
@@ -21,11 +21,24 @@ def suittext(text):
     return l
 
 def dateclean(date):
-    date=suittext(date)
+    date=suittext2(date)
     a=date.split('-')
     return a[2]+'-'+a[1]+'-'+a[0]
 
-def scrap(url):
+def datecleannow(date):
+    d=date.split('-')
+    return d[2]+'-'+d[1]+'-'+d[0]
+
+def suittext(text):
+    text=text.replace(", ,","")
+    text=text.replace("'","")
+    text=text.replace("  ","")
+    text=text.replace("u\\n","")
+    text=text.replace("\\r"," ")
+    text=text.replace("\t","")
+    return text
+
+def scrap(url,m):
     response = urlopen(url)
     htmltext = BeautifulSoup(response)
 
@@ -44,28 +57,35 @@ def scrap(url):
     except:
         Deadline=""
         Deadline_clean=""
-    table= htmltext.findAll('td', {"class":"rightTd"})
+    table= htmltext.find('div',{"class":"tbContent"}).findAll('td', {"class":"rightTd"})
+    table2=htmltext.find('div',{"class":"tbContent"}).findAll('td', {"class":"leftTd"})
     Udbudstype= table[0].text
     Opgavetype= table[1].text
     Tildelingskriterier= table[2].text
-    Ordregiver= table[3].text
-    Adresse= table[4].text
-    CPV_kode= table[5].text
-    Udbudsform =table[6].text
-    try :
-        SMV_venligt =table[7].text
-        Kontaktperson =table[8].text
-        Kontakt=table[9].text
+    a=suittext(BeautifulSoup(str(table2[3])).text)
+    if "Ordregiver" in a:
+        i=3
+    else :
+        i=4
+    Ordregiver=table[i].text
+    Adresse= table[i+1].text
+    CPV_kode= table[i+2].text
+    b=suittext(BeautifulSoup(str(table2[i+3])).text)
+    j=i+3
+    if "Udbudsform" in b :
+        Udbudsform =table[j].text
+        j+=1
+    else:
+        Udbudsform=""
+
+    try:
+            Kontaktperson =table[j].text
+            Kontakt=table[j+1].text
     except :
-        try:
-            SMV_venligt=""
-            Kontaktperson =table[7].text
-            Kontakt=table[8].text
-        except :
-            SMV_venligt=""
             Kontaktperson =""
             Kontakt=""
-
+    Annoceret=suittext(BeautifulSoup(str(m)).text)
+    Annoceret_clean=datecleannow(Annoceret)
     data={"ID":unicode(id), \
           "Url":unicode(url),\
           "Title":unicode(Title),\
@@ -78,11 +98,11 @@ def scrap(url):
           "Adresse":unicode(Adresse),\
           "CPV kode":unicode(CPV_kode),\
           "Udbudsform":unicode(Udbudsform),\
-          "SMV venligt":unicode(SMV_venligt),\
+          "Annoceret":unicode(Annoceret),\
+          "Annoceret_clean":unicode(Annoceret_clean),\
           "Kontaktperson":unicode(Kontaktperson),\
           "Kontakt":unicode(Kontakt)}
     scraperwiki.sqlite.save(unique_keys=['ID'], data=data)
-
 
 
 
@@ -104,6 +124,14 @@ def suppredon(l):
             l1.append(el)
     return l1
 
+def lil(a,ch):
+    j=0
+    for i in ch :
+        if i==a :
+            j+=1
+    return j
+
+
 def Navigation(link):
     with Browser("phantomjs", service_args=['--ignore-ssl-errors=true', '--ssl-protocol=any']) as browser:
         browser.driver.set_window_size(1280, 1024)
@@ -113,6 +141,7 @@ def Navigation(link):
         htmltext = BeautifulSoup(browser.html, "html.parser")
         soop = htmltext.find('table',{"id":"datagridtenders_1F8CBE3E"}).findNext('tbody')
         links = soop.findAll('a')
+        Annonceret=htmltext.findAll('td',{"class":"center"})
         for i in range(0,len(links)-1):
             if i%2==0:
                 href.append("http://udbud.dk"+links[i].get('href'))
@@ -125,6 +154,9 @@ def Navigation(link):
                 htmltext = BeautifulSoup(browser.html, "html.parser")
                 soop = htmltext.find('table',{"id":"datagridtenders_1F8CBE3E"}).findNext('tbody')
                 links = soop.findAll('a')
+                k=htmltext.findAll('td',{"class":"center"})
+                for i in k :
+                    Annonceret.append(i)
                 for i in range(0,len(links)-1):
                     if i%2==0:
                         href.append("http://udbud.dk"+links[i].get('href'))
@@ -133,19 +165,23 @@ def Navigation(link):
 
         except:
             pass
+    a=[]
+    for i in Annonceret:
+        if lil('-',str(i))==2 :
+            a.append(i)
 
-    return suppredon(href)
+    return a,suppredon(href)
 
 def main():
     urls = ['http://udbud.dk/Pages/Tenders/News']
 
     for link in urls:
-        href=Navigation(link)
+        a,href=Navigation(link)
+        j=-1
         for i in href:
-            try:
-                scrap(i)
-            except :
-                pass
+            scrap(i,a[j])
+
+
 
 if __name__ == '__main__':
     main()
