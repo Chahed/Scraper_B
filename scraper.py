@@ -27,7 +27,7 @@ def dateclean(date):
 
 def datecleannow(date):
     d=date.split('-')
-    return d[2]+'-'+d[1]+'-'+d[0]
+    return d[2].strip()+'-'+d[1].strip()+'-'+d[0].strip()
 
 def suittext(text):
     text=text.replace(", ,","")
